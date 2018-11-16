@@ -10,12 +10,11 @@ namespace :opencollective do
 		
     response = JSON.parse(open("https://opencollective.com/octobox/members.json"))
   	txs = response.select do |item| 
-  		Date.parse(item["lastTransactionAt"]) > period &&
-  		item["github"].present? || item["organization"].present?
+  		Date.parse(item["lastTransactionAt"]) > period && item["github"].present?
   	end
 
     # check for users who have made multiple donations in the last month that tipped
-    tx_groups = txs.group_by{|item| item["github"].presence || item["organization"]}
+    tx_groups = txs.group_by{|item| item["github"].presence}
     subs = tx_groups.select do |_name, transactions|
       transactions.sum{|item| item['lastTransactionAmount']} >= subs_cost_per_period
     end

@@ -20,6 +20,57 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 en:
+  home:
+    strapline: "Untangle your GitHub Notifications"
+    counter: "notifications managed, and counting"
+    sound_like_you:
+      head: "Sound like you?"
+      p0: "You often wonder whether that issue you can't find was a figment of your imagination. You may even wake up in a cold sweat at the thought of hundreds of notifications landing in your inbox each morning."
+      p1: "Many developers, and even some GitHub staff, use email filters to manage their notifications. If you'd prefer to stay away from email then Octobox is for you:"
+    dont_lose_track:
+      head: "Don't lose track"
+      p0: "Octobox adds an extra 'archived' state to each notification so you can mark it as 'done'. If anything happens on an archived thread, issue or PR, Octobox will move it back into your inbox."
+    keep_your_focus:
+      head: "Keep your focus"
+      p0: "Search and filter notifications by repository, organisation, type, action, state, CI status and reason and keep notifications from bots alongside your regular labels, author and assignees."
+    stay_fresh:
+      head: "Stay fresh"
+      p0: "Keep those notifications up to date with issue/pull-request status, CI status, labels and more shown alongside basic title, organisation, repo and type information. "
+      link: "Read more..."
+    install_the_app:
+      head: "Liven up notifications with the GitHub app"
+      p0: "By default Octobox will pull basic public and private notification information:"
+      basic_alt_text: "basic notification"
+      p1: "Install the GitHub app to add live information on issue, PR, and CI status, labels, authors and more to your organisation's notifications:"
+      enhanced_alt_text: "enhanced notification"
+      button: "Install the GitHub App"
+    pricing:
+      head: "Pricing"
+      p0: "Octobox is"
+      bold: "free for open source"
+      p1: "projects with basic notifications for private projects. To add"
+      link: "enhanced notifications"
+      p2: "for private repositories to your organisation's account:"
+      p3: "Wondering why there are two options?"
+      read_more: "Read more about our pricing strategy"
+    used_by:
+      head: "Used by developers from"
+    run_your_own:
+      head: "Run your own Octobox"
+      p0: "The Octobox team hosts a shared instance of Octobox at"
+      p1: ", but perhaps you're looking to host your own or get yourself set up to contribute to Octobox? Fantastic! There are a number of install options available to you, check out the"
+      link: "installation guide"
+    contribute:
+      head: "Contribute"
+      p0: "Octobox is open source and the source code is hosted at"
+      p1: "If you have an idea for a feature or enhancement, open an"
+      issue_link: "issue"
+      p2: "or a pull request"
+      p3: "If you want to contribute you'll find we're a welcoming bunch. If you don't know where to start, take a look at the issues tagged as"
+      label_link: "Help Wanted"
+      p4: "You can also help triage issues. This can include reproducing bug reports, or asking for vital information such as version numbers or reproduction instructions. If you would like to start triaging issues, one easy way to get started is to"
+      triage_link: "subscribe to Octobox on CodeTriage"
+      p5: "Finally, if you would like to become a maintainer, we will consider adding you if you contribute frequently to the project. Feel free to ask."
   views:
     pagination:
       previous: 'Previous'

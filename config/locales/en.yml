@@ -97,6 +97,13 @@ en:
       triage_link: "subscribe to Octobox on CodeTriage"
       p5: "Finally, if you would like to become a maintainer, we will consider adding you if you contribute frequently to the project. Feel free to ask."
   views:
+    notifications:
+      nothing_to_see_here: Nothing to see here.
+      select_a_notification: Select a notification to see the contents of its thread here.
+      expecting_threads:
+        p0: Expecting threads?? Make sure
+        link: comments
+        p1: are enabled on your installation.
     pagination:
       previous: 'Previous'
       next: 'Next'

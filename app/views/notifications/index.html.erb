@@ -14,10 +14,10 @@
     <div id='thread' class='flex-thread d-none d-xxxl-block'>
       <div class="nothing-here text-center align-self-center">
         <%= octicon 'comment-discussion', height: 32, class: 'blankslate-icon' %>
-        <h3>Nothing to see here.</h3>
-        <p>Select a notification to see the contents of its thread here.</p>
+        <h3><%= t('views.notifications.nothing_to_see_here') %></h3>
+        <p><%= t('views.notifications.select_a_notification') %></p>
         <% unless current_user.notifications.any? %>
-          <p><i>Expecting threads?? Make sure <a href="<%= Octobox.config.include_comments %>/settings/notifications">comments</a> are enabled on your installation.</i></p>
+          <p><i><%= t('views.notifications.expecting_threads.p0') %> <a href="<%= Octobox.config.include_comments %>/settings/notifications"><%= t('views.notifications.expecting_threads.link') %></a> <%= t('views.notifications.expecting_threads.p1') %></i></p>
         <% end %>
       </div>
     </div>

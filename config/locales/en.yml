@@ -20,6 +20,24 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 en:
+  header:
+    toggle_search: Toggle search
+    toggle_navigation: Toggle navigation
+    search:
+        placeholder: 'Search...'
+        cheat_sheet: 'Search cheat sheet'
+    install_the_app: Install the GitHub App
+    support_on_open_collective: 'Support Octobox on OpenCollective'
+    dropdown:
+      dashboard: GitHub Dashboard
+      support: Octobox Support
+      admin: Admin
+      user_documentation: User Documentation
+      download_desktop_app: Download Desktop App
+      api_documentation: API Documentation
+      settings: Settings
+      donate: Donate
+      logout: Logout
   home:
     strapline: "Untangle your GitHub Notifications"
     counter: "notifications managed, and counting"

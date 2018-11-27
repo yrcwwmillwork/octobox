@@ -38,6 +38,13 @@ en:
       settings: Settings
       donate: Donate
       logout: Logout
+  footer:
+    et_al: et al
+    logo_by: logo by
+    source: Source
+    available_under: available under
+    terms: Terms
+    privacy_policy: Privacy Policy
   home:
     strapline: "Untangle your GitHub Notifications"
     counter: "notifications managed, and counting"

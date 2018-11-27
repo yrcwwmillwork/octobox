@@ -104,6 +104,23 @@ en:
         p0: Expecting threads?? Make sure
         link: comments
         p1: are enabled on your installation.
+      help:
+        title: Keyboard shortcuts
+    shared:
+      keyboard_mappings:
+        r: Refresh
+        j: Move down the list
+        k: Move up the list
+        s: Star current notification
+        x: Mark current notification
+        a: Select/deselect all
+        e: Archive current/marked notification(s)
+        m: Mute current/marked notification(s)
+        d: Mark current/marked notification(s) as read here and on GitHub
+        hash: Delete current/marked notification(s)
+        o: Open current notification in a new window
+        question_mark: Show this help menu
+        esc: Close modal, thread OR clear filters
     pagination:
       previous: 'Previous'
       next: 'Next'

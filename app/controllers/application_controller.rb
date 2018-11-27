@@ -6,6 +6,7 @@ class ApplicationController < ActionController::Base
   helper_method :current_user, :logged_in?, :initial_sync?, :display_subject?
   before_action :authenticate_user!
   before_action :check_access_token_present
+  before_action :set_locale
 
   before_bugsnag_notify :add_user_info_to_bugsnag if Rails.env.production?
 
@@ -23,6 +24,10 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def set_locale
+    I18n.locale = params[:locale] || I18n.default_locale
+  end
 
   def display_subject?
     return true if Octobox.fetch_subject?

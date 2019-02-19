@@ -25,6 +25,14 @@ common: &default_settings
   # Logging level for log/newrelic_agent.log
   log_level: info
 
+  # New Relic Real User Monitoring gives you insight into the performance real users are
+  # experiencing with your website. This is accomplished by measuring the time it takes for
+  # your users' browsers to download and render your web pages by injecting a small amount
+  # of JavaScript code into the header and footer of each page.
+  browser_monitoring:
+    # By default the agent automatically injects the monitoring JavaScript
+    # into web pages. Set this attribute to false to turn off this behavior.
+    auto_instrument: false
 
 # Environment-specific settings are in this section.
 # RAILS_ENV or RACK_ENV (as appropriate) is used to determine the environment.
@@ -40,7 +48,7 @@ test:
 
 staging:
   <<: *default_settings
-  app_name: My Application (Staging)
+  app_name: Octobox (Staging)
 
 production:
   <<: *default_settings

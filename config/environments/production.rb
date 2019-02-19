@@ -93,11 +93,6 @@ Rails.application.configure do
   config.lograge.enabled = true
 
   if ENV['SKYLIGHT_AUTHENTICATION'].present?
-    require 'skylight'
     config.skylight.probes += %w(redis)
-  end
-
-  if ENV['NEW_RELIC_LICENSE_KEY']
-    require 'newrelic_rpm'
   end
 end

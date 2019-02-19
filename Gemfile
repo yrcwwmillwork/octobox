@@ -76,9 +76,8 @@ group :development do
 end
 
 group :production do
-  # don't auto-require performance instrumentation, so we can only require if the authentication is available
-  gem 'skylight', '4.0.0.beta', require: false
-  gem 'newrelic_rpm', require: false
+  gem 'skylight', '4.0.0.beta'
+  gem 'newrelic_rpm'
 
   gem 'lograge'
   gem 'puma_worker_killer'

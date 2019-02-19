@@ -39,6 +39,8 @@ gem 'commonmarker'
 gem 'mysql2', require: false
 gem 'pg', '1.1.4', require: false
 
+gem 'barnes'
+
 group :development, :test do
   gem 'byebug', platform: :mri
   gem 'dotenv-rails'

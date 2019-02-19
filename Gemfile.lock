@@ -198,6 +198,7 @@ GEM
     multipart-post (2.0.0)
     mysql2 (0.5.2)
     nenv (0.3.0)
+    newrelic_rpm (6.0.0.351)
     nio4r (2.3.1)
     nokogiri (1.10.1)
       mini_portile2 (~> 2.4.0)
@@ -442,6 +443,7 @@ DEPENDENCIES
   minitest
   mocha
   mysql2
+  newrelic_rpm
   octicons_helper
   octokit
   oj

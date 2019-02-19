@@ -92,5 +92,8 @@ Rails.application.configure do
 
   config.lograge.enabled = true
 
-  config.skylight.probes += %w(redis) if ENV['SKYLIGHT_AUTHENTICATION'].present?
+  if ENV['SKYLIGHT_AUTHENTICATION'].present?
+    require 'skylight'
+    config.skylight.probes += %w(redis)
+  end
 end

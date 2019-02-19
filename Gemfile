@@ -74,7 +74,8 @@ group :development do
 end
 
 group :production do
-  gem 'skylight', '4.0.0.beta'
+  # don't auto-require skylight, so we can only require if the authentication is available
+  gem 'skylight', '4.0.0.beta', require: false
   gem 'lograge'
   gem 'puma_worker_killer'
 end

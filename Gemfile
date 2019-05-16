@@ -76,9 +76,10 @@ group :development do
 end
 
 group :production do
-  gem 'skylight', '4.0.0.beta'
+  gem 'skylight', '4.0.0.beta2'
   gem 'newrelic_rpm'
 
   gem 'lograge'
   gem 'puma_worker_killer'
+  gem 'hirefire-resource'
 end

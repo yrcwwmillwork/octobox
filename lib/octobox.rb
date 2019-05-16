@@ -59,7 +59,7 @@ module Octobox
     private
 
     def generate_jwt
-      private_key = OpenSSL::PKey::RSA.new(config.github_app_jwt)
+      private_key = OpenSSL::PKey::RSA.new(config.github_app_jwt.gsub("\\n", "\n"))
 
       payload = {
         iat: Time.now.to_i,

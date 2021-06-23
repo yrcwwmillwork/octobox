@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 class User < ApplicationRecord
-  attr_encrypted :access_token, key: Octobox.config.attr_encyrption_key
-  attr_encrypted :personal_access_token, key: Octobox.config.attr_encyrption_key
-  attr_encrypted :app_token, key: Octobox.config.attr_encyrption_key
+  attr_encrypted :access_token, key: Octobox.config.attr_encryption_key
+  attr_encrypted :personal_access_token, key: Octobox.config.attr_encryption_key
+  attr_encrypted :app_token, key: Octobox.config.attr_encryption_key
 
   has_secure_token :api_token
   has_many :notifications, dependent: :delete_all
@@ -27,8 +27,11 @@ class User < ApplicationRecord
   }
   validates_with PersonalAccessTokenValidator
 
-  scope :not_recently_synced, -> { where('last_synced_at < ?', 5.minutes.ago) }
+  scope :not_recently_synced, -> { where('users.last_synced_at < ?', 5.minutes.ago) }
   scope :with_access_token, -> { where.not(encrypted_access_token: nil) }
+  scope :active, -> { where('users.updated_at > ?', 1.month.ago) }
+
+  after_create :create_default_pinned_searches
 
   def admin?
     Octobox.config.github_admin_ids.include?(github_id.to_s)
@@ -65,7 +68,7 @@ class User < ApplicationRecord
       token_field => auth_hash.dig('credentials', 'token')
     }
 
-    update_attributes!(github_attributes)
+    update!(github_attributes)
   end
 
   def syncing?
@@ -102,6 +105,11 @@ class User < ApplicationRecord
 
   def access_token_client
     @access_token_client ||= Octokit::Client.new(access_token: access_token, auto_paginate: true) if access_token.present?
+  end
+
+  def comment_client(comment)
+    return app_installation_client if app_token.present? && comment.subject.repository.commentable?
+    return github_client
   end
 
   def app_installation_client
@@ -142,5 +150,31 @@ class User < ApplicationRecord
     app_installation_ids = app_installations.map(&:id)
     removed_permissions = app_installation_permissions.reject{|ep| app_installation_ids.include?(ep.app_installation_id) }
     removed_permissions.each(&:destroy)
+  end
+
+  def has_app_installed?(subject)
+    subject.repository.app_installation_id && app_token
+  end
+
+  def can_comment?(subject)
+    return false unless subject.commentable?
+    return true if personal_access_token_enabled?
+    return true if Octobox.fetch_subject?
+    return true if github_app_authorized? && subject.repository && subject.repository.commentable?
+    return false
+  end
+
+  def create_default_pinned_searches
+    pinned_searches.create(query: 'state:closed,merged archived:false', name: 'Archivable')
+    pinned_searches.create(query: 'type:pull_request state:open status:success archived:false', name: 'Mergeable')
+    pinned_searches.create(query: "type:pull_request author:#{github_login} inbox:true", name: 'My PRs')
+  end
+
+  def import_notifications(data)
+    data.each do |new_notification|
+      n = self.notifications.find_or_initialize_by(github_id: new_notification['github_id'])
+      n.attributes = new_notification.except('id', 'user_id')
+      n.save(touch: false) if n.changed?
+    end
   end
 end

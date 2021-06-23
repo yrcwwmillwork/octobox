@@ -2,6 +2,12 @@ class Search
   attr_accessor :parsed_query
   attr_accessor :scope
 
+  def self.initialize_for_saved_search(query:, user:, params: {})
+    eager_load_relation = [{subject: :labels}, {repository: {app_installation: {subscription_purchase: :subscription_plan}}}]
+    scope = user.notifications.includes(eager_load_relation)
+    Search.new(query: query, scope: scope, params: params)
+  end
+
   def initialize(query: '', scope:, params: {})
     @parsed_query = SearchParser.new(query)
     @scope = scope
@@ -25,6 +31,8 @@ class Search
     res = res.exclude_state(exclude_state) if exclude_state.present?
     res = res.author(author) if author.present?
     res = res.exclude_author(exclude_author) if exclude_author.present?
+    res = res.number(number) if number.present?
+    res = res.exclude_number(exclude_number) if exclude_number.present?
     res = res.assigned(assignee) if assignee.present?
     res = res.exclude_assigned(exclude_assignee) if exclude_assignee.present?
     res = res.status(status) if status.present?
@@ -36,6 +44,7 @@ class Search
     res = res.bot_author(bot_author) unless bot_author.nil?
     res = res.unlabelled unless unlabelled.nil?
     res = res.is_private(is_private) unless is_private.nil?
+    res = res.draft(is_draft) unless is_draft.nil?
     res = lock_conditionally(res)
     res = mute_conditionally(res)
     res = apply_sort(res)
@@ -66,16 +75,21 @@ class Search
     end
 
     @parsed_query[:archived] = ['true'] if params[:archive].present?
-    @parsed_query[:inbox] = ['true'] if params[:archive].blank? && params[:starred].blank? && params[:q].blank?
+    @parsed_query[:inbox] = ['true'] if @parsed_query[:archived].blank? && params[:archive].blank? && params[:starred].blank? && params[:q].blank?
 
-    [:reason, :type, :unread, :state, :is_private].each do |filter|
+    [:reason, :type, :unread, :state, :is_private, :draft].each do |filter|
       next if params[filter].blank?
       @parsed_query[filter] = Array(params[filter]).map(&:underscore)
     end
 
-    [:repo, :owner, :author, :label].each do |filter|
+    [:repo, :owner, :author, :number].each do |filter|
       next if params[filter].blank?
       @parsed_query[filter] = Array(params[filter])
+    end
+
+    if params[:label].present?
+      label = params[:label].match?(/\:|\s/) ? "\"#{params[:label]}\"" : params[:label]
+      @parsed_query[:label] = Array(label)
     end
 
     @parsed_query[:assignee] = Array(params[:assigned]) if params[:assigned].present?
@@ -151,6 +165,14 @@ class Search
 
   def exclude_author
     parsed_query[:'-author']
+  end
+
+  def number
+    parsed_query[:number]
+  end
+
+  def exclude_number
+    parsed_query[:'-number']
   end
 
   def unread
@@ -235,6 +257,10 @@ class Search
 
   def is_muted
     boolean_prefix(:muted)
+  end
+
+  def is_draft
+    boolean_prefix(:draft)
   end
 
   private

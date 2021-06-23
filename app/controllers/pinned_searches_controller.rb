@@ -18,7 +18,7 @@ class PinnedSearchesController < ApplicationController
 
   def update
     @pinned_search = current_user.pinned_searches.find(params[:id])
-    if @pinned_search.update_attributes(pinned_search_params)
+    if @pinned_search.update(pinned_search_params)
       redirect_to settings_path, notice: 'Search updated'
     else
       render :new
@@ -36,7 +36,13 @@ class PinnedSearchesController < ApplicationController
   end
 
   def show
-    redirect_to settings_path
+    respond_to do |format|
+      format.html { redirect_to settings_path }
+      format.json do
+        @pinned_search = current_user.pinned_searches.find(params[:id])
+        @search = Search.initialize_for_saved_search(query: @pinned_search.query, user: current_user)
+      end
+    end
   end
 
   private

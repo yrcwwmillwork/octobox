@@ -21,7 +21,6 @@ class UsersController < ApplicationController
 
   def edit # :nodoc:
     repo_counts = current_user.notifications.group(:repository_full_name).count
-    @latest_git_sha = ENV['HEROKU_SLUG_COMMIT'] || Git.open(Rails.root).object('HEAD').sha rescue nil
     @total = repo_counts.sum(&:last)
     @most_active_repos = repo_counts.sort_by(&:last).reverse.first(10)
     @most_active_orgs = current_user.notifications.group(:repository_owner_name).count.sort_by(&:last).reverse.first(10)
@@ -41,13 +40,13 @@ class UsersController < ApplicationController
   #   HEAD OK
   #
   def update
-    if current_user.update_attributes(update_user_params)
+    if current_user.update(update_user_params)
       if params[:user][:regenerate_api_token]
         current_user.regenerate_api_token
       end
 
       respond_to do |format|
-        format.html { redirect_back(fallback_location: root_path) }
+        format.html { redirect_back(fallback_location: root_path, notice: 'Settings updated') }
         format.json { head :ok }
       end
     else
@@ -83,6 +82,17 @@ class UsersController < ApplicationController
     end
   end
 
+  def export
+    send_data current_user.notifications.to_json, :type => 'application/json; header=present', :disposition => "attachment; filename=octobox.json"
+  end
+
+  def import
+    data = JSON.parse(params[:file].read)
+    current_user.import_notifications(data)
+    flash[:success] = "Import complete"
+    redirect_to root_path
+  end
+
   private
 
   def ensure_correct_user
@@ -105,6 +115,6 @@ class UsersController < ApplicationController
       params[:user][:personal_access_token] = nil
     end
 
-    params.require(:user).permit(:personal_access_token, :refresh_interval, :theme, :display_comments)
+    params.require(:user).permit(:personal_access_token, :refresh_interval, :theme, :display_comments, :disable_confirmations)
   end
 end

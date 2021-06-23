@@ -42,9 +42,18 @@
     <% if Octobox.config.push_notifications && logged_in? %>
       <meta name="push_notifications" content="true">
     <% end %>
+
+    <% if @notifications.to_a.any? %>
+      <% @notifications.each do |notification| %>
+        <% if notification.prerender? %>
+          <meta rel="prerender" href="<%= notification_link(notification) %>">
+        <% end %>
+      <% end %>
+    <% end %>
+
   </head>
 
-  <body>
+  <body class="<%= show_confirmations_class %>">
     <% if logged_in? %>
       <div class="flex-header">
         <%= render 'layouts/header' %>

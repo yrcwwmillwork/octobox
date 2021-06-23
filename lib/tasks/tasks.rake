@@ -45,7 +45,12 @@ namespace :tasks do
 
   desc "Sync App Installations"
   task sync_installations: :environment do
-    AppInstallation.all.find_each(&:sync)
+    AppInstallation.sync_all
+  end
+
+  desc "Update all users to display comments in Octobox"
+  task display_comments: :environment do
+    User.update_all(display_comments: true)
   end
 
   desc "cleanup unique-jobs cache"

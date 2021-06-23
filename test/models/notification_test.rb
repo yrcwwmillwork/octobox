@@ -391,4 +391,45 @@ class NotificationTest < ActiveSupport::TestCase
 
     assert notification.display?
   end
+
+  test 'upgrade is required for notifications without a purchase' do
+    stub_env_var('OCTOBOX_IO', 'true')
+
+    repository = create(:repository, private: true)
+    repository.stubs(:required_plan_available?).returns(false)
+
+    notification = create(:notification, repository: repository)
+    user = notification.user
+
+    assert notification.upgrade_required?
+
+  end
+
+  test 'upgrade is not required for users with a personal plan' do
+    stub_env_var('OCTOBOX_IO', 'true')
+
+    repository = create(:repository, private: true)
+    repository.stubs(:required_plan_available?).returns(false)
+
+    notification = create(:notification, repository: repository)
+    user = notification.user
+    user.stubs(:has_personal_plan?).returns(true)
+
+    refute notification.upgrade_required?
+  end
+
+  test 'deletes subject when deleted' do
+    subject = create(:subject)
+    notification = create(:notification, subject: subject)
+    notification.destroy
+    assert Subject.where(id: subject.id).empty?
+  end
+
+  test 'doesnt deletes subject when deleted if subject is referenced by other notifications' do
+    subject = create(:subject)
+    notification = create(:notification, subject: subject)
+    notification2 = create(:notification, subject: subject)
+    notification.destroy
+    refute Subject.where(id: subject.id).empty?
+  end
 end

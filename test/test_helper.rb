@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "simplecov"
-SimpleCov.start 'rails'
-
 ENV['RAILS_ENV'] ||= 'test'
 require File.expand_path('../../config/environment', __FILE__)
 require 'rails/test_help'
@@ -16,8 +13,6 @@ Sidekiq::Testing.fake!
 Dir[Rails.root.join('test/support/**/*.rb')].each { |f| require f }
 
 FactoryBot.find_definitions
-
-puts "We are using #{ActiveRecord::Base.connection.adapter_name}"
 
 class ActiveSupport::TestCase
   # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
@@ -51,4 +46,16 @@ module NotificationTestHelper
       notifications.map { |n| n.last_read_at = Time.parse(n.last_read_at).to_s if n.last_read_at }
     end
   end
+end
+
+def set_env(key, val)
+  original = ENV[key]
+  if val
+    ENV[key] = val.to_s
+  else
+    ENV.delete(key)
+  end
+  yield(val)
+ensure
+  ENV[key] = original
 end

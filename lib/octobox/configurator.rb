@@ -1,6 +1,6 @@
 module Octobox
   class Configurator
-    def attr_encyrption_key
+    def attr_encryption_key
       @key ||= begin
         key = ENV['OCTOBOX_ATTRIBUTE_ENCRYPTION_KEY']
 
@@ -101,20 +101,6 @@ module Octobox
       @github_team_id || env_integer('GITHUB_TEAM_ID')
     end
     attr_writer :github_team_id
-
-    def percy_token
-      @percy_token || ENV['PERCY_TOKEN'].presence
-    end
-    attr_writer :percy_token
-
-    def percy_project
-      @percy_project || ENV['PERCY_PROJECT'].presence
-    end
-    attr_writer :percy_project
-
-    def percy_configured?
-      percy_token.present? && percy_project.present?
-    end
 
     def native_link
       ENV['OCTOBOX_NATIVE_LINK'] || nil

@@ -1,8 +1,12 @@
+.git
+.github
 .gitignore
 README.md
 
 log
 tmp
+test
+vendor
 openshift/
 coverage/
 .bundle
@@ -16,7 +20,6 @@ coverage/
 docker-compose.yml
 docker-compose-dev.yml
 .travis.yml
-.rubocop.yml
 .env.example
 .eslintignore
 .eslintrc

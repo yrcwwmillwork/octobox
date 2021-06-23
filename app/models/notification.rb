@@ -7,23 +7,17 @@ class Notification < ApplicationRecord
 
   SUBJECTABLE_TYPES = SUBJECT_TYPE_COMMIT_RELEASE + SUBJECT_TYPE_ISSUE_REQUEST
 
-  if DatabaseConfig.is_postgres?
-    include PgSearch
-    pg_search_scope :search_by_subject_title,
-                    against: :subject_title,
-                    order_within_rank: 'notifications.updated_at DESC',
-                    using: {
-                      tsearch: {
-                        prefix: true,
-                        negation: true,
-                        dictionary: "english"
-                      }
+  include PgSearch::Model
+  pg_search_scope :search_by_subject_title,
+                  against: :subject_title,
+                  order_within_rank: 'notifications.updated_at DESC',
+                  using: {
+                    tsearch: {
+                      prefix: true,
+                      negation: true,
+                      dictionary: "english"
                     }
-  else
-    def self.search_by_subject_title(title)
-      where('subject_title like ?', "%#{title}%")
-    end
-  end
+                  }
 
   belongs_to :user
   belongs_to :subject, foreign_key: :subject_url, primary_key: :url, optional: true
@@ -36,8 +30,7 @@ class Notification < ApplicationRecord
   validates :archived, inclusion: [true, false]
 
   after_update :push_if_changed
-
-  paginates_per 20
+  after_destroy :clean_up_subject
 
   class << self
     def attributes_from_api_response(api_response)
@@ -65,6 +58,11 @@ class Notification < ApplicationRecord
   def state
     return unless display_subject?
     @state ||= subject.try(:state)
+  end
+
+  def draft?
+    return unless display_subject?
+    @draft ||= subject.try(:draft?)
   end
 
   def private?
@@ -176,7 +174,11 @@ class Notification < ApplicationRecord
 
   def upgrade_required?
     return nil unless repository.present?
-    repository.private? && !repository.required_plan_available?
+    repository.private? && !(repository.required_plan_available? || user.has_personal_plan?)
+  end
+
+  def prerender?
+    unread? and !['closed', 'merged'].include?(state) and !display_thread?
   end
 
   def subject_number
@@ -213,5 +215,9 @@ class Notification < ApplicationRecord
       repo.last_synced_at = Time.current
       repo.save
     end
+  end
+
+  def clean_up_subject
+    subject.destroy if subject && subject.notifications.empty?
   end
 end

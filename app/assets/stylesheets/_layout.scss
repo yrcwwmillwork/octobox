@@ -6,6 +6,7 @@ body {
   font-size: 14px;
   display: flex;
   height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
   flex-direction: column;
 }
 
@@ -55,7 +56,7 @@ body {
 .flex-thread {
   flex: 1;
   min-width: 0;
-  overflow: auto;
+  overflow-x: hidden;
   .text-content{
     h1, h2{
       padding-top: $spacer * 3

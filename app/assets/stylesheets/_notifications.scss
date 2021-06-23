@@ -10,7 +10,7 @@ $notification-items: (
 );
 
 .table-notifications {
-  td{
+  td {
     padding: 0.6rem;
     &.notification-archived, .notification-repo{
       padding: 0;
@@ -19,9 +19,24 @@ $notification-items: (
       }
     }
   }
-  .active {
-    font-weight: bold;
-    background-color: mix($list-group-action-active-bg, $body-bg, 50%);
+  tr {
+    &.active {
+      .thread-link {
+        font-weight: bold;
+      }
+    }
+    &:not(.active) {
+      background-color: mix($list-group-action-active-bg, $body-bg, 50%);
+      .notification-subject .link {
+        color: $text-muted;
+      }
+    }
+    @media (hover: hover) {
+      &:hover, &:focus {
+        box-shadow: 0 1px 5px rgba(27, 31, 35, .15);
+        background: $list-group-action-active-bg;
+      }
+    }
   }
 }
 
@@ -122,6 +137,10 @@ $notification-items: (
       max-width: 10rem;
       overflow: hidden;
     }
+    .notification-number {
+      display: inline-block;
+      min-width: 3rem;
+    }
     .notification-date{
       min-width: 5.5em;
       text-align: right;
@@ -162,13 +181,6 @@ $notification-items: (
     }
     tbody{
       width:100%
-    }
-    &.table > tbody > tr.active {
-      background: $list-group-action-active-bg;
-      &:hover {
-        background: $list-group-action-active-bg;
-      }
-
     }
     &.table > tbody > tr > td {
       border: none;
@@ -231,6 +243,7 @@ $notification-items: (
     .notification-subject {
       display: inline-block;
       .link {
+        word-break: break-all;
         overflow-wrap: break-word;
       }
       &:first-child .badge{
@@ -245,6 +258,10 @@ $notification-items: (
     .notification-date {
       top: 10px;
       right: 10px;
+    }
+    .notification-number {
+      display: initial;
+      min-width: auto;
     }
   }
 }

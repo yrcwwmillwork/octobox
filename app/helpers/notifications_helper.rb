@@ -39,11 +39,24 @@ module NotificationsHelper
     'pending' => 'primitive-dot'
   }
 
+  COMMENT_STATUS = {
+    'APPROVED' => 'success',
+    'CHANGES_REQUESTED' => 'error',
+    'COMMENTED' => 'pending'
+  }
+
+  COMMENT_STATUS_OCTICON = {
+    'APPROVED' => 'check',
+    'CHANGES_REQUESTED' => 'x',
+    'COMMENTED' => 'primitive-dot'
+  }
+
   def filters
     {
       reason:          params[:reason],
       unread:          params[:unread],
       repo:            params[:repo],
+      number:          params[:number],
       type:            params[:type],
       archive:         params[:archive],
       starred:         params[:starred],
@@ -168,17 +181,20 @@ module NotificationsHelper
     SUBJECT_TYPES[subject_type]
   end
 
-  def notification_icon_title(subject_type, state = nil)
-    return subject_type.underscore.humanize if state.blank?
-    "#{state.underscore.humanize} #{subject_type.underscore.humanize.downcase}"
+  def notification_icon_title(notification)
+    return "Draft #{notification.subject_type.underscore.humanize.downcase}" if notification.draft?
+    return notification.subject_type.underscore.humanize if notification.state.blank?
+    "#{notification.state.underscore.humanize} #{notification.subject_type.underscore.humanize.downcase}"
   end
 
-  def notification_icon_color(state)
+  def notification_icon_color(notification)
+    return unless notification.display_subject?
+    return 'text-draft' if notification.draft?
     {
       'open' => 'text-success',
       'closed' => 'text-danger',
       'merged' => 'text-subscribed'
-    }[state]
+    }[notification.state]
   end
 
   def reason_label(reason)
@@ -272,6 +288,8 @@ module NotificationsHelper
   end
 
   def search_query_matches?(query, other_query)
+    query = Search.new(query: query, scope: {}).to_query
+    other_query = Search.new(query: other_query, scope: {}).to_query
     query.split(' ').sort == other_query.split(' ').sort
   end
 
@@ -289,6 +307,16 @@ module NotificationsHelper
     content_tag(:span,
       octicon(NOTIFICATION_STATUS_OCTICON[status], height: 16, class: status),
       class: "badge badge-light badge-pr #{status}",
+      title: status.humanize,
+      data: {toggle: 'tooltip'}
+    )
+  end
+
+  def comment_status(status)
+    return unless status.present?
+    content_tag(:span,
+      octicon(COMMENT_STATUS_OCTICON[status], height: 16, class: COMMENT_STATUS[status]),
+      class: "badge badge-light #{COMMENT_STATUS[status]}",
       title: status.humanize,
       data: {toggle: 'tooltip'}
     )
@@ -315,25 +343,20 @@ module NotificationsHelper
     SUBJECT_TYPES[subject_type]
   end
 
-  def notification_button_title(subject_type, state = nil)
-    return subject_type.underscore.humanize if state.blank?
-    "#{state.underscore.humanize}"
+  def notification_button_title(notification)
+    return 'Draft' if notification.draft?
+    return notification.subject_type.underscore.humanize if notification.state.blank?
+    notification.state.underscore.humanize
   end
 
-  def notification_button_color(state)
+  def notification_button_color(notification)
+    return unless notification.display_subject?
+    return 'btn-draft' if notification.draft?
     {
       'open' => 'btn-success',
       'closed' => 'btn-danger',
       'merged' => 'btn-merged'
-    }[state]
-  end
-
-  def notification_badge_color(state)
-    {
-      'open' => 'badge-success',
-      'closed' => 'badge-danger',
-      'merged' => 'badge-merged'
-    }[state]
+    }[notification.state]
   end
 
   def parse_markdown(str)

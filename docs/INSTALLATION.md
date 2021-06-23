@@ -8,7 +8,6 @@ in your GitHub settings for Octobox to work.
 
 ### Installation
 
-* [Database Selection](#database-selection)
 * [Deployment to Heroku](#deployment-to-heroku)
 * [Deployment to OpenShift Online](#deployment-to-openshift-online)
 * [Encryption Key](#encryption-key)
@@ -34,18 +33,6 @@ in your GitHub settings for Octobox to work.
 * [Live updates](#live-updates)
 
 # Installation
-## Database Selection
-
-Octobox supports a few database adapters. The full list can be found [here](https://github.com/octobox/octobox/blob/85bfbed9111a36e94aa74d4026633dc6ff844bf6/lib/database_config.rb#L2).
-
-#### How to specify an adapter
-
-- The default is `postgres`
-- you can specify an environment variable `DATABASE=<adapter>`
-- Protip: you can make a `.env` file that include the `DATABASE=<adapter>` if you don't want to specify it all the time.
-
-Note, databases other than PostgreSQL don't have full text support (or recently have it). For this reason, search may be degraded as we can no longer use the `pg_search` gem.
-
 ## Deployment to Heroku
 
 You can host your own instance of Octobox using Heroku.
@@ -53,17 +40,13 @@ You can host your own instance of Octobox using Heroku.
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/octobox/octobox)
 
 Heroku will ask you to provide an OAuth client ID and secret, which you can get by
-[registering a new OAuth application on GitHub](https://github.com/settings/applications/new)]. When creating the OAuth application:
+[registering a new OAuth application on GitHub](https://github.com/settings/applications/new). When creating the OAuth application:
 
 * Make sure you enable the `notifications` scope on it (you will also need the `read:org` scope if you enable restricted access).
 * You can provide Homepage and Authorization URLs by using the Heroku app name you choose. By default, a Heroku app is available at its Heroku domain, which has the form `[name of app].herokuapp.com`.
   The callback url would then be `[name of app].herokuapp.com/auth/github/callback`.
 
 For more help with setting up an OAuth application on GitHub, see below.
-
-After deploying the app to heroku, enable the `runtime-dyno-metadata` feature to enable the changelog feature:
-
-    heroku labs:enable runtime-dyno-metadata
 
 ## Deployment to OpenShift Online
 
@@ -85,13 +68,13 @@ Protip: To generate a key, you can use `bin/rails secret | cut -c1-32`
 First things first, you'll need to fork and clone Octobox repository to
 your local machine.
 
-Secondly, you'll need to install Ruby 2.6.1. I recommend using the excellent [rbenv](https://github.com/rbenv/rbenv),
+Secondly, you'll need to install Ruby 2.7.2. I recommend using the excellent [rbenv](https://github.com/rbenv/rbenv),
 and [ruby-build](https://github.com/rbenv/ruby-build):
 
 ```bash
 brew install rbenv ruby-build
-rbenv install 2.6.1
-rbenv global 2.6.1
+rbenv install 2.7.2
+rbenv global 2.7.2
 ```
 
 Next, you'll need to make sure that you have PostgreSQL installed. This can be
@@ -104,7 +87,7 @@ brew install postgres
 On Debian-based Linux distributions you can use apt-get to install Postgres:
 
 ```bash
-sudo apt-get install postgresql postgresql-contrib libpq-dev
+sudo apt-get install postgresql postgresql-contrib libpq-dev rbenv
 ```
 
 Now, let's install the gems from the `Gemfile` ("Gems" are synonymous with libraries in other
@@ -416,8 +399,9 @@ Then create a new GitHub App, <https://github.com/settings/apps/new>, with the f
 - Webhook URL: The domain plus `/hooks/github`, i.e. http://myoctoboxdomain.com/hooks/github
 - Webhook secret: generate a password and paste it in here and save for later
 - Permissions:
+  - Organization members: Read-only (only needed if your organization has private members)
   - Repository metadata: Read-only
-  - Issues: Read-only
+  - Issues: write
   - Pull Requests: Read-only
   - Commit statuses: Read-only
 - Subscribe to events: check all available options
@@ -436,9 +420,9 @@ Then start the rails app and visit <https://github.com/apps/my-octobox/installat
 
 n.b. you will be required to log into the oauth app (to allow access to the notifications scope), followed by the github app (to allow access to installed app data).
 
-To process events recieved from the webhook, ensure you have a sidekiq worker running as well as the rails server: `$ bundle exec sidekiq -C config/sidekiq.yml`
+To process events received from the webhook, ensure you have a sidekiq worker running as well as the rails server: `$ bundle exec sidekiq -C config/sidekiq.yml`
 
-If you wish to run the GitHub app locally and still recieve webhook events, use a service like <https://ngrok.com> to create a public url (`https://my-octobx.ngrok.com`) and use instead of http://localhost:3000 for all oauth and GitHub app config urls.
+If you wish to run the GitHub app locally and still receive webhook events, use a service like <https://ngrok.com> to create a public url (`https://my-octobx.ngrok.com`) and use instead of http://localhost:3000 for all oauth and GitHub app config urls.
 
 ## Open links in the same tab
 

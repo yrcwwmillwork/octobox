@@ -40,6 +40,7 @@ Rails.application.routes.draw do
       post :sync
       get  :sync
       get  :syncing
+      post :syncing
       post :mute_selected
       post :mark_read_selected
       get  :unread_count
@@ -50,6 +51,7 @@ Rails.application.routes.draw do
       get  :show
       post :star
       get  :expand_comments
+      post :comment 
     end
   end
 
@@ -67,6 +69,8 @@ Rails.application.routes.draw do
   resources :pinned_searches
 
   get '/settings', to: 'users#edit'
+  get '/export', to: 'users#export'
+  post '/import', to: 'users#import'
   resources :users, only: [:update, :destroy] do
     collection do
       scope format: true, constraints: { format: 'json' } do

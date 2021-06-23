@@ -1,5 +1,5 @@
 module DatabaseConfig
-  SUPPORTED_ADAPTERS = %w(mysql2 postgresql)
+  SUPPORTED_ADAPTERS = %w(postgresql)
 
   class << self
     # The current adapter being used
@@ -56,9 +56,7 @@ module DatabaseConfig
     #
     def username
       database_url_or_fallback('username') do
-        default = if is_mysql?
-                    'root'
-                  elsif Rails.env.production?
+        default = if Rails.env.production?
                     'octobox'
                   else
                     ''
@@ -72,11 +70,16 @@ module DatabaseConfig
     #
     def encoding
       database_url_or_fallback('encoding') do
-        if is_mysql?
-          'utf8mb4'
-        else
-          'unicode'
-        end
+        'unicode'
+      end
+    end
+
+    # Port for the database
+    # Overridden by DATABASE_URL
+    #
+    def port
+      database_url_or_fallback('port') do
+        ENV.fetch('OCTOBOX_DATABASE_PORT') { 5432 }
       end
     end
 
@@ -88,12 +91,10 @@ module DatabaseConfig
       end.to_i
     end
 
-    def is_mysql?
-      adapter.downcase == 'mysql2'
-    end
-
-    def is_postgres?
-      adapter.downcase == 'postgresql'
+    def timeout
+      database_url_or_fallback('timeout') do
+        ENV.fetch("OCTOBOX_STATEMENT_TIMEOUT") { 10000 }.to_i
+      end.to_i
     end
 
     private
@@ -104,7 +105,7 @@ module DatabaseConfig
     end
 
     def database_url_config
-      ActiveRecord::ConnectionAdapters::ConnectionSpecification::ConnectionUrlResolver.new(ENV['DATABASE_URL']).to_hash
+      ActiveRecord::DatabaseConfigurations::ConnectionUrlResolver.new(ENV['DATABASE_URL']).to_hash.stringify_keys
     end
   end
 end

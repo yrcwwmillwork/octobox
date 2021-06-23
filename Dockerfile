@@ -1,6 +1,7 @@
-FROM ruby:2.6.1-alpine
+FROM ruby:2.7.2-alpine
 
 ENV APP_ROOT /usr/src/app
+ENV OCTOBOX_DATABASE_PORT 5432
 WORKDIR $APP_ROOT
 
 # =============================================
@@ -17,13 +18,14 @@ RUN apk add --update \
     git \
     nodejs \
     postgresql-dev \
-    mysql-dev \
     tzdata \
     curl-dev \
  && rm -rf /var/cache/apk/* \
+ && gem update --system \
+ && gem install bundler foreman \
  && bundle config --global frozen 1 \
- && bundle install --without test --jobs 2 \
- && gem install foreman
+ && bundle config set without 'test' \
+ && bundle install --jobs 2
 
 # ========================================================
 # Application layer

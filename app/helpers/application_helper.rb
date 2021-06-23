@@ -1,4 +1,5 @@
 module ApplicationHelper
+  include Pagy::Frontend
   ALERT_TYPES = {
     success: 'alert-success',
     error: 'alert-danger',
@@ -16,7 +17,7 @@ module ApplicationHelper
       flash.each do |msg_type, message|
         concat(content_tag(:div, message, class: "alert #{bootstrap_class_for(msg_type)} fade show") do
           concat content_tag(:button, octicon('x'), class: 'close', data: { dismiss: 'alert' })
-          concat message
+          concat message.html_safe
         end)
       end
     end)
@@ -52,5 +53,14 @@ module ApplicationHelper
   def avatar_url(github_login, size: 30)
     github_login = github_login.gsub('[bot]', '') if Comment::BOT_AUTHOR_REGEX.match?(github_login)
     "#{Octobox.config.github_domain}/#{github_login}.png?s=#{size}"
+  end
+
+  def show_confirmations_class
+    return unless logged_in?
+    return 'disable_confirmations' if current_user.disable_confirmations?
+  end
+
+  def confirmation(message, notification)
+    notification.user.try(:disable_confirmations?) ? nil : message
   end
 end

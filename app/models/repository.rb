@@ -5,7 +5,7 @@ class Repository < ApplicationRecord
   has_many :notifications, foreign_key: :repository_full_name, primary_key: :full_name
   has_many :users, -> { distinct }, through: :notifications
   has_many :subjects, foreign_key: :repository_full_name, primary_key: :full_name
-  belongs_to :app_installation
+  belongs_to :app_installation, optional: true
 
   validates :full_name, presence: true, uniqueness: true
   validates :github_id, uniqueness: true
@@ -18,6 +18,11 @@ class Repository < ApplicationRecord
 
   def github_app_installed?
     app_installation_id.present?
+  end
+
+  def commentable?
+    return true if Octobox.fetch_subject?
+    github_app_installed? && app_installation.write_issues?
   end
 
   def display_subject?
@@ -48,12 +53,13 @@ class Repository < ApplicationRecord
 
   def sync_subjects_in_foreground
     subject_urls = notifications.subjectable.distinct.pluck(:subject_url)
+    return unless app_installation
     client = app_installation.github_client
     subject_urls.each do |subject_url|
       begin
         remote_subject = client.get(subject_url)
         SyncSubjectWorker.perform_async_if_configured(remote_subject.to_h)
-      rescue Octokit::ClientError => e
+      rescue Octokit::ClientError, Octokit::Forbidden => e
         Rails.logger.warn("\n\n\033[32m[#{Time.current}] WARNING -- #{e.message}\033[0m\n\n")
         nil
       end

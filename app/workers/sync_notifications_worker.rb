@@ -7,7 +7,7 @@ class SyncNotificationsWorker
   include Sidekiq::Status::Worker
   sidekiq_options queue: :sync_notifications, unique: :until_executed
 
-  TIMEOUT = 30.minutes.to_i
+  TIMEOUT = 5.minutes.to_i
 
   def perform(user_id)
     user = User.find_by(id: user_id)
@@ -21,7 +21,7 @@ class SyncNotificationsWorker
         handle_exception(exception, user)
       rescue Octokit::BadGateway, Octokit::ServerError, Octokit::ServiceUnavailable => exception
         handle_exception(exception, user)
-      rescue Faraday::ClientError => exception
+      rescue Faraday::Error => exception
         handle_exception(exception, user)
       end
     end

@@ -1,22 +1,25 @@
 var Octobox = (function() {
 
+  var maybeConfirm = function(message){
+    if($('body.disable_confirmations').length){
+      return true
+    } else {
+      return confirm(message);
+    }
+  }
+
   var checkSelectAll = function() {
     $(".js-select_all").click();
   };
 
-  var getCurrentRow = function() {
-    return getDisplayedRows().has("td.js-current");
-  };
-
-  var getDisplayedRows = function() {
-    return $(".js-table-notifications tr.notification");
-  };
-
-  var setRowCurrent = function(row, add) {
-    var classes = "current js-current";
-    var td = row.find("td.notification-checkbox");
-    add ? td.addClass(classes) : td.removeClass(classes);
-  };
+  var updatePinnedSearchCounts = function(pinned_search) {
+    var pinned_search = $(pinned_search);
+    $.get(pinned_search.data('url'), function(data) {
+      pinned_search.html(data.count);
+    }).fail(function() {
+      pinned_search.remove(); // Remove the total value if there's an error
+    });
+  }
 
   var moveCursorToClickedRow = function(event) {
     // Don't event.preventDefault(), since we want the
@@ -92,20 +95,34 @@ var Octobox = (function() {
   };
 
   var enablePopOvers = function() {
+    var showTimer;
+
     $('[data-toggle="popover"]').popover({ trigger: "manual" , html: true})
     .on("mouseenter", function () {
-        var _this = this;
-        $(this).popover("show");
+      if (showTimer) {
+        clearTimeout(showTimer);
+      }
+
+      var _this = this;
+      showTimer = setTimeout(function () {
+        showTimer = undefined
+        $(_this).popover("show");
         $(".popover").on("mouseleave", function () {
             $(_this).popover('hide');
         });
+      }, 500);
     }).on("mouseleave", function () {
-        var _this = this;
-        setTimeout(function () {
-            if (!$(".popover:hover").length) {
-                $(_this).popover("hide");
-            }
-        }, 300);
+      if (showTimer) {
+        clearTimeout(showTimer);
+        return;
+      }
+
+      var _this = this;
+      setTimeout(function () {
+        if (!$(".popover:hover").length) {
+          $(_this).popover("hide");
+        }
+      }, 300);
     });
   }
 
@@ -117,15 +134,18 @@ var Octobox = (function() {
     window.current_id = undefined;
 
     $(document).keydown(function(e) {
-      // disable shortcuts for the seach box
-      if ($("#help-box").length && e.target.id !== "search-box" && !e.ctrlKey && !e.metaKey) {
+      // disable shortcuts for the search and comment
+      if ($("#help-box").length && !["search-box","comment_body"].includes(e.target.id)  && !e.ctrlKey && !e.metaKey) {
         var shortcutFunction = (!e.shiftKey ? shortcuts : shiftShortcuts)[e.which] ;
         if (shortcutFunction) { shortcutFunction(e) }
         return;
       }
 
-      // escape search-box
-      if(e.target.id === "search-box" && e.which === 27) shortcuts[27](e);
+      // escape search and comment
+      if(["search-box", "comment_body"].includes(e.target.id) && e.which === 27) shortcuts[27](e);
+
+      // post comment form on CMD-enter
+      if(["comment_body"].includes(e.target.id) && (e.metaKey || e.ctrlKey) && e.which == 13) $('#reply').submit();
     });
   };
 
@@ -133,11 +153,6 @@ var Octobox = (function() {
     var checked = $(".js-select_all").prop("checked")
     getDisplayedRows().find("input").prop("checked", checked).trigger("change");
   };
-
-  var uncheckAll = function () {
-    $(".js-select_all").prop("checked", false);
-    checkAll();
-  }
 
   var muteThread = function() {
     var id = $('#notification-thread').data('id');
@@ -152,7 +167,7 @@ var Octobox = (function() {
   };
 
   var mute = function(ids){
-    var result = confirm("Are you sure you want to mute?");
+    var result = maybeConfirm("Are you sure you want to mute?");
     if (result) {
       $.post( "/notifications/mute_selected" + location.search, { "id[]": ids})
       .done(function() {
@@ -160,7 +175,6 @@ var Octobox = (function() {
         updateFavicon();
       })
       .fail(function(){
-        $(".header-flash-messages").empty();
         notify("Could not mute notification(s)", "danger");
       });
     }
@@ -177,7 +191,6 @@ var Octobox = (function() {
       updateFavicon();
     })
     .fail(function(){
-        $(".header-flash-messages").empty();
         notify("Could not mark notification(s) read", "danger");
     });
   };
@@ -204,12 +217,12 @@ var Octobox = (function() {
 
   var archiveThread = function(){
     var id = $('#notification-thread').data('id');
-    archive(id, true);
+    archive([id], true);
   }
 
   var unarchiveThread = function(){
     var id = $('#notification-thread').data('id');
-    archive(id, false);
+    archive([id], false);
   }
 
   var archive = function(ids, value){
@@ -219,7 +232,6 @@ var Octobox = (function() {
       updateFavicon();
     })
     .fail(function(){
-      $(".header-flash-messages").empty();
       notify("Could not archive notification(s)", "danger");
     });
   }
@@ -241,7 +253,6 @@ var Octobox = (function() {
       }, success: function(data, status, xhr) {
         if (data["error"] != null) {
           $(".sync .octicon").removeClass("spinning");
-          $(".header-flash-messages").empty();
           notify(data["error"], "danger")
         } else {
           Turbolinks.visit("/"+location.search);
@@ -254,7 +265,11 @@ var Octobox = (function() {
     if($("a.js-sync.js-async").length) {
       $.get("/notifications/sync.json", refreshOnSync);
     } else {
+      if(!$(".js-sync .octicon").hasClass("spinning")){
+        $(".js-sync .octicon").addClass("spinning");
+      }
       Turbolinks.visit($("a.js-sync").attr("href"))
+      $(".sync .octicon").removeClass("spinning");
     }
   };
 
@@ -350,21 +365,10 @@ var Octobox = (function() {
     $("td.js-current").removeClass("current js-current");
   };
 
-  var openThread = function() {
-    if($("#thread").hasClass("d-none")){
-      $("#thread").toggleClass("d-none");
-      $(".flex-main").toggleClass("show-thread");
-    }
-    if($(".flex-content").hasClass("active")){
-      $(".flex-content").toggleClass("active");
-    }
-  };
-
   var closeThread = function() {
-    if(!$("#thread").hasClass("d-none")){
-      $("#thread").toggleClass("d-none");
-      $(".flex-main").toggleClass("show-thread");
-    }
+    history.pushState({thread: $(this).attr('href')}, 'Octobox', $(this).attr('href'))
+    $("#thread").addClass("d-none");
+    $(".flex-main").removeClass("show-thread");
   };
 
   var toggleOffCanvas = function() {
@@ -377,15 +381,22 @@ var Octobox = (function() {
       updateFavicon();
     })
     .fail(function(){
-      $(".header-flash-messages").empty();
       notify("Could not mark notification(s) read", "danger");
     });
     $("#notification-"+id).removeClass("active");
   };
 
+  function setViewportHeight() {
+    var vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', "".concat(vh, "px"));
+  };
+
   var initialize = function() {
     enableTooltips();
     enablePopOvers();
+
+    setViewportHeight();
+    window.addEventListener('resize', setViewportHeight);
 
     if ($("#help-box").length){
       enableKeyboardShortcuts();
@@ -394,6 +405,11 @@ var Octobox = (function() {
       recoverPreviousCursorPosition();
       setAutoSyncTimer();
     }
+
+    // Unread counts for pinned searches
+    $("span.pinned-search-count").each(function() {
+      updatePinnedSearchCounts(this);
+    });
 
     // Sync Handling
     if($(".js-is_syncing").length){ refreshOnSync() }
@@ -413,7 +429,7 @@ var Octobox = (function() {
   };
 
   var deleteNotifications = function(ids){
-    var result = confirm("Are you sure you want to delete?");
+    var result = maybeConfirm("Are you sure you want to delete?");
     if (result) {
       $.post("/notifications/delete_selected" + location.search, {"id[]": ids})
       .done(function() {
@@ -421,7 +437,6 @@ var Octobox = (function() {
         updateFavicon();
       })
       .fail(function(){
-        $(".header-flash-messages").empty();
         notify("Could not delete notification", "danger");
       });
     }
@@ -447,13 +462,15 @@ var Octobox = (function() {
 
     $.get($(this).attr('href'), function(data){
       if (data["error"] != null) {
-        $(".header-flash-messages").empty();
         notify(data["error"], "danger")
       } else {
         $('#thread').html(data)
       }
     });
-    openThread();
+    $("#thread").removeClass("d-none");
+    $(".flex-main").addClass("show-thread");
+    $(".flex-content").removeClass("active")
+    subscribeToComments();
     return false;
   }
 
@@ -464,14 +481,13 @@ var Octobox = (function() {
 
     $.get($(this).attr('href'), function(data){
       if (data["error"] != null) {
-        $(".header-flash-messages").empty();
         notify(data["error"], "danger")
       } else {
         $('#more-comments').html(data)
       }
     });
     return false;
-  }  
+  }
 
   // private methods
 
@@ -495,7 +511,7 @@ var Octobox = (function() {
   };
 
   var getCurrentRow = function() {
-    return getDisplayedRows().has("td.js-current")
+    return getDisplayedRows().has("td.js-current");
   };
 
   var getMarkedOrCurrentRows = function() {
@@ -613,7 +629,7 @@ var Octobox = (function() {
   var setRowCurrent = function(row, add) {
     var classes = "current js-current";
     var td = row.find("td.notification-checkbox");
-    add ? td.addClass(classes) : td.removeClass(classes)
+    add ? td.addClass(classes) : td.removeClass(classes);
   };
 
   var moveCursor = function(upOrDown) {
@@ -625,7 +641,7 @@ var Octobox = (function() {
       scrollToCursor();
     }
   };
-  
+
   // keyboard shortcuts when shift key is pressed
   var shiftShortcuts = {
     191: openModal,        // ?
@@ -666,7 +682,6 @@ var Octobox = (function() {
     sync: sync,
     markRowCurrent: markRowCurrent,
     closeThread: closeThread,
-    openThread: openThread,
     archiveThread: archiveThread,
     unarchiveThread: unarchiveThread,
     toggleStarClick: toggleStarClick,

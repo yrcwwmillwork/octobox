@@ -87,7 +87,8 @@ class NotificationsController < ApplicationController
     if @notification.subject && @notification.subject.commentable?
       comments_loaded = 5
       @comments = @notification.subject.comments.order('created_at DESC').limit(comments_loaded).reverse
-      @comments_left_to_load = @notification.subject.comment_count - comments_loaded > 0 ? @notification.subject.comment_count - comments_loaded : 0
+      @comments_left_to_load = @notification.subject.comment_count - comments_loaded
+      @comments_left_to_load = 0 if @comments_left_to_load < 0
     else
       @comments = []
     end
@@ -119,6 +120,22 @@ class NotificationsController < ApplicationController
       render partial: "notifications/comments", locals:{comments: @comments}, layout: false
     else
       render 'notifications/show'
+    end
+  end
+
+  def comment
+    subject = current_user.notifications.find(params[:id]).subject
+
+    if current_user.can_comment?(subject)
+      subject.comment(current_user, params[:comment][:body]) if subject.commentable?
+      if request.xhr?
+        render partial: "notifications/comments", locals:{comments: subject.comments.last}, layout: false
+      else
+        redirect_back fallback_location: notification_path
+      end
+    else
+      flash[:error] = 'Could not post your comment'
+      redirect_back fallback_location: notification_path
     end
   end
 
@@ -291,6 +308,7 @@ class NotificationsController < ApplicationController
     @statuses              = scope.reorder(nil).distinct.joins(:subject).group('subjects.status').count
     @unlabelled            = scope.reorder(nil).unlabelled.count
     @bot_notifications     = scope.reorder(nil).bot_author.count
+    @draft                 = scope.reorder(nil).draft.count
     @assigned              = scope.reorder(nil).assigned(current_user.github_login).count
     @visiblity             = scope.reorder(nil).distinct.joins(:repository).group('repositories.private').count
     @repositories          = Repository.where(full_name: scope.reorder(nil).distinct.pluck(:repository_full_name)).select('full_name,private')
@@ -299,8 +317,8 @@ class NotificationsController < ApplicationController
     check_out_of_bounds(scope)
 
     @unread_count = user_unread_count
-    @notifications = scope.page(page).per(per_page)
-    @total = @notifications.total_count
+    @pagy, @notifications = pagy(scope, items: per_page, size: [1,2,2,1])
+    @total = @pagy.count
 
     @cur_selected = [per_page, @total].min
     return scope
@@ -319,7 +337,7 @@ class NotificationsController < ApplicationController
   end
 
   def current_notifications(scope = notifications_for_presentation)
-    [:repo, :reason, :type, :unread, :owner, :state, :author, :is_private, :status].each do |sub_scope|
+    [:repo, :reason, :type, :unread, :owner, :state, :number, :author, :is_private, :status, :draft].each do |sub_scope|
       next unless params[sub_scope].present?
       # This cast is required due to a bug in type casting
       # TODO: Rails 5.2 was supposed to fix this:
@@ -341,19 +359,16 @@ class NotificationsController < ApplicationController
   end
 
   def notifications_for_presentation
-    eager_load_relation = [{subject: :labels}, {repository: {app_installation: {subscription_purchase: :subscription_plan}}}]
-    scope = current_user.notifications.includes(eager_load_relation)
-
-    @search = Search.new(scope: scope, query: params[:q], params: params)
+    @search = Search.initialize_for_saved_search(query: params[:q], user: current_user, params: params)
 
     if params[:q].present?
       @search.results
     elsif params[:starred].present?
-      scope.starred
+      @search.scope.starred
     elsif params[:archive].present?
-      scope.archived
+      @search.scope.archived
     else
-      scope.inbox
+      @search.scope.inbox
     end
   end
 

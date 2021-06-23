@@ -8,11 +8,12 @@ module Octobox
         scope :inbox,    -> { where.not(archived: true) }
         scope :archived, ->(value = true) { where(archived: value) }
         scope :newest,   -> { order('notifications.updated_at DESC') }
-        scope :starred,  ->(value = true) { where(starred: value) }
-        scope :type,     ->(subject_type) { where(subject_type: subject_type) }
-        scope :reason,   ->(reason)       { where(reason: reason) }
-        scope :unread,   ->(unread)       { where(unread: unread) }
-        scope :status,   ->(status)       { joins(:subject).where(subjects: { status: status }) }
+        scope :starred,  ->(value = true)  { where(starred: value) }
+        scope :type,     ->(subject_type)  { where(subject_type: subject_type) }
+        scope :reason,   ->(reason)        { where(reason: reason) }
+        scope :unread,   ->(unread)        { where(unread: unread) }
+        scope :status,   ->(status)        { joins(:subject).where(subjects: { status: status }) }
+        scope :draft,    ->(draft = true) { joins(:subject).where(subjects: { draft: draft }) }
         scope :unassigned, -> { joins(:subject).where("subjects.assignees = '::'") }
         scope :locked,     -> { joins(:subject).where(subjects: { locked: true }) }
         scope :subjectable,-> { where(subject_type: Notification::SUBJECTABLE_TYPES) }
@@ -47,6 +48,12 @@ module Octobox
           author_names = [author_names] if author_names.is_a?(String)
           joins(:subject).where(
             author_names.map { |author_name| Subject.arel_table[:author].matches(author_name) }.reduce(:or)
+          )
+        }
+
+        scope :number, ->(subject_numbers)  {
+          joins(:subject).where(
+            subject_numbers.map { |subject_number| arel_table[:subject_url].matches("%/#{subject_number}") }.reduce(:or)
           )
         }
 

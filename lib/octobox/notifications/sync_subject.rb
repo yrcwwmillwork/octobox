@@ -36,7 +36,7 @@ module Octobox
       end
 
       def download_subject?
-        @download_subject ||= subjectable? && github_client && (Octobox.fetch_subject? || github_app_installed? || download_public_subjects?)
+        @download_subject ||= user.present? && subjectable? && github_client && (Octobox.fetch_subject? || github_app_installed? || download_public_subjects?)
       end
 
       def download_public_subjects?
@@ -51,7 +51,7 @@ module Octobox
       private
 
       def download_subject
-        github_client.get(subject_url)
+        github_client.get(subject_url, accept: 'application/vnd.github.shadow-cat-preview')
 
       # If permissions changed and the user hasn't accepted, we get a 401
       # We may receive a 403 Forbidden or a 403 Not Available

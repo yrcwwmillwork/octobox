@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby '2.7.2'
+ruby '3.0.2'
 
 gem 'rails', '6.1.4.1'
 gem 'bootstrap', '4.6.0'
@@ -20,8 +20,8 @@ gem 'pg_search'
 gem 'jbuilder'
 gem 'rake', require: false
 gem 'rgb'
-gem 'sidekiq', '6.2.1'
-gem 'sidekiq-unique-jobs', '6.0.25'
+gem 'sidekiq'
+gem 'sidekiq-unique-jobs'
 gem 'sidekiq-scheduler', require: false
 gem 'rack-canonical-host'
 gem 'sidekiq-status'
@@ -33,6 +33,7 @@ gem 'oj'
 gem 'yard', require: false
 gem 'commonmarker'
 gem 'pg', '1.2.3'
+gem 'rexml'
 
 group :development, :test do
   gem 'dotenv-rails'
@@ -53,7 +54,6 @@ group :development do
   gem 'web-console'
   gem 'listen'
   gem 'spring'
-  gem 'spring-watcher-listen'
   gem 'brakeman'
   gem 'bullet'
   gem 'binding_of_caller'
